@@ -5,18 +5,20 @@ import com.xinchentechnote.exchange.sse.impl.NettySseTraderApi;
 
 public interface SseTraderApi {
 
-    static SseTraderApi CreateSseTraderApi(String flowPath){
-        return new NettySseTraderApi(flowPath);
+    static SseTraderApi CreateSseTraderApi(){
+        return new NettySseTraderApi();
     }
 
-    static <T extends SseTraderApi> T create(Class<T> implClass, String flowPath) throws Exception {
-        try {
-            // 查找带有 String 参数的构造函数
-            return implClass.getConstructor(String.class).newInstance(flowPath);
-        } catch (NoSuchMethodException e) {
-            // 如果没有带参数的构造函数，尝试无参构造函数
-            return implClass.getConstructor().newInstance();
+    static <T extends SseTraderApi> T create(Class<T> implClass, Object[] args) throws Exception {
+        if (args != null && args.length > 0) {
+            // 查找带有指定参数类型的构造函数
+            Class<?>[] paramTypes = new Class[args.length];
+            for (int i = 0; i < args.length; i++) {
+                paramTypes[i] = args[i].getClass();
+            }
+            implClass.getConstructor(paramTypes).newInstance(args);
         }
+        return implClass.getConstructor().newInstance();
     }
 
     String GetApiVersion();

@@ -1,6 +1,8 @@
 package com.xinchentechnote.exchange.sse.impl;
 
 import com.xinchentechnote.exchange.sse.SseTraderApi;
+import com.xinchentechnote.exchange.sse.dto.ReqUserLoginField;
+import com.xinchentechnote.exchange.sse.dto.ReqUserLogoutField;
 
 import java.util.concurrent.locks.LockSupport;
 
@@ -10,9 +12,11 @@ public class NettySseTraderApiTest {
 
     @org.junit.Test
     public void init() {
-        SseTraderApi sseTraderApi = SseTraderApi.CreateSseTraderApi("");
+        SseTraderApi sseTraderApi = SseTraderApi.CreateSseTraderApi();
         sseTraderApi.RegisterFront("tcp://127.0.0.1:9010");
         sseTraderApi.Init();
+        sseTraderApi.ReqUserLogin(new ReqUserLoginField(),1);
+        sseTraderApi.ReqUserLogout(new ReqUserLogoutField(),2);
         LockSupport.parkNanos(1000_000_000L);
     }
 }

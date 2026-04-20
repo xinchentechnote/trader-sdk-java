@@ -1,10 +1,16 @@
 package com.xinchentechnote.exchange.sse.impl;
 
+import com.finproto.codec.BinaryCodec;
+import com.finproto.sse.bin.messages.Heartbeat;
+import com.finproto.sse.bin.messages.Logon;
+import com.finproto.sse.bin.messages.Logout;
+import com.finproto.sse.bin.messages.SseBinary;
 import com.xinchentechnote.exchange.sse.SseTraderApi;
 import com.xinchentechnote.exchange.sse.SseTraderSpi;
 import com.xinchentechnote.exchange.sse.dto.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -13,15 +19,16 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 public class NettySseTraderApi implements SseTraderApi {
 
-    private String flowPath;
+    static final Heartbeat heartbeat = new Heartbeat();
+
     private String ip;
     private int port;
     private SseTraderSpi spi;
+    private volatile Channel channel;
 
     private static NioEventLoopGroup workerGroup = new NioEventLoopGroup(1);
 
-    public NettySseTraderApi(String flowPath) {
-        this.flowPath = flowPath;
+    public NettySseTraderApi() {
     }
 
     @Override
@@ -33,48 +40,47 @@ public class NettySseTraderApi implements SseTraderApi {
     public void Init() {
 
         Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(workerGroup)
-                .channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<SocketChannel>() {
+        ChannelFuture future = bootstrap.group(workerGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel socketChannel) throws Exception {
+                ChannelPipeline pipeline = socketChannel.pipeline();
+                pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 1024, // 最大帧长度
+                        12,           // 长度字段偏移量（MsgType占4字节）
+                        4,           // 长度字段长度（MsgSeqNum占8字节）
+                        4,           // 长度调整 + 4byte checksum
+                        0           // 初始字节剥离
+                )).addLast(new SimpleChannelInboundHandler<ByteBuf>() {
                     @Override
-                    protected void initChannel(SocketChannel socketChannel) throws Exception {
-                        ChannelPipeline pipeline = socketChannel.pipeline();
-                        pipeline.addLast(new LengthFieldBasedFrameDecoder(
-                                1024 * 1024, // 最大帧长度
-                                12,           // 长度字段偏移量（MsgType占4字节）
-                                4,           // 长度字段长度（MsgSeqNum占8字节）
-                                4,           // 长度调整 + 4byte checksum
-                                0           // 初始字节剥离
-                        )).addLast(new SimpleChannelInboundHandler<ByteBuf>() {
-                            @Override
-                            public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                                System.out.println("Connected to " + ctx.channel().remoteAddress());
-                                super.channelActive(ctx);
-                            }
-
-                            @Override
-                            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                System.out.println("Disconnected from " + ctx.channel().remoteAddress());
-                                super.channelInactive(ctx);
-                            }
-
-                            @Override
-                            protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
-                                System.out.println("Received msg: " + byteBuf.readableBytes());
-                            }
-                        });
+                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                        System.out.println("Connected to " + ctx.channel().remoteAddress());
+                        channel = ctx.channel();
+                        super.channelActive(ctx);
                     }
-                })
-                .connect(ip,port).addListener(
-                        (ChannelFutureListener) channelFuture -> {
-                            if (channelFuture.isSuccess()) {
-                                System.out.println("连接成功");
-                            } else {
-                                System.out.println("连接失败");
-                            }
+
+                    @Override
+                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                        System.out.println("Disconnected from " + ctx.channel().remoteAddress());
+                        super.channelInactive(ctx);
+                    }
+
+                    @Override
+                    protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
+                        System.out.println("Received msg: " + byteBuf.readableBytes());
+                    }
                 });
-
-
+            }
+        }).connect(ip, port).addListener((ChannelFutureListener) channelFuture -> {
+            if (channelFuture.isSuccess()) {
+                System.out.println("连接成功");
+            } else {
+                System.out.println("连接失败");
+            }
+        });
+        try {
+            future.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -113,12 +119,39 @@ public class NettySseTraderApi implements SseTraderApi {
 
     @Override
     public void ReqUserLogin(ReqUserLoginField reqUserLoginField, int requestId) {
+        Logon logon = new Logon();
+        logon.setSenderCompId("send");
+        logon.setTargetCompId("target");
+        logon.setQsize(10);
+        logon.setHeartBtInt((short) 5);
+        logon.setPrtclVersion("1.0");
+        logon.setTradeDate(20260420);
+        send(logon);
+    }
 
+    private void sendHeartbeat(){
+        sendMessage(33, heartbeat);
+    }
+
+    private void send(Logon logon) {
+        sendMessage(40, logon);
+    }
+
+    private void sendMessage(int msgType, BinaryCodec body) {
+        SseBinary sseBinary = new SseBinary();
+        sseBinary.setMsgType(msgType);
+        sseBinary.setBody(body);
+        ByteBuf buffer = Unpooled.buffer();
+        sseBinary.encode(buffer);
+        this.channel.writeAndFlush(buffer);
     }
 
     @Override
     public void ReqUserLogout(ReqUserLogoutField reqUserLoginField, int requestId) {
-
+        Logout logout = new Logout();
+        logout.setSessionStatus(1);
+        logout.setText("logout");
+        sendMessage(41, logout);
     }
 
     @Override
