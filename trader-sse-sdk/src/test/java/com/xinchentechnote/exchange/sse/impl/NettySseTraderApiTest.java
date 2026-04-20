@@ -31,7 +31,7 @@ public class NettySseTraderApiTest {
 
             @Override
             public void OnRspUserLogin(RspUserLoginField pRspUserLoginField, RspInfoField pRspInfo, int nRequestID, boolean bIsLast) {
-                sseTraderApi.ReqUserLogout(new ReqUserLogoutField(),2);
+//                sseTraderApi.ReqUserLogout(new ReqUserLogoutField(),2);
             }
 
             @Override

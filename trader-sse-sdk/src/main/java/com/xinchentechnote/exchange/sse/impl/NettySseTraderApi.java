@@ -16,6 +16,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 
 public class NettySseTraderApi implements SseTraderApi {
 
@@ -48,12 +51,13 @@ public class NettySseTraderApi implements SseTraderApi {
             @Override
             protected void initChannel(SocketChannel socketChannel) throws Exception {
                 ChannelPipeline pipeline = socketChannel.pipeline();
-                pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 1024, // 最大帧长度
+                pipeline.addLast("frame",new LengthFieldBasedFrameDecoder(1024 * 1024, // 最大帧长度
                         12,           // 长度字段偏移量（MsgType占4字节）
                         4,           // 长度字段长度（MsgSeqNum占8字节）
                         4,           // 长度调整 + 4byte checksum
                         0           // 初始字节剥离
-                )).addLast(new SimpleChannelInboundHandler<ByteBuf>() {
+                )).addLast("idle",new IdleStateHandler(3,0,0))
+                        .addLast(new SimpleChannelInboundHandler<ByteBuf>() {
                     @Override
                     public void channelActive(ChannelHandlerContext ctx) throws Exception {
                         System.out.println("Connected to " + ctx.channel().remoteAddress());
@@ -79,6 +83,7 @@ public class NettySseTraderApi implements SseTraderApi {
                     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
                         SseBinary msg = new SseBinary();
                         msg.decode(byteBuf);
+                        System.out.println("Received msg: " + msg);
                         int msgType = msg.getMsgType();
                         switch (msgType) {
                             case 33: // Heartbeat
@@ -90,6 +95,9 @@ public class NettySseTraderApi implements SseTraderApi {
                                     RspUserLoginField rsp = new RspUserLoginField();
                                     // 填充rsp，如果需要
                                     RspInfoField rspInfo = new RspInfoField();
+                                    short heartBtInt = ((Logon) msg.getBody()).getHeartBtInt();
+                                    pipeline.remove("idle");
+                                    pipeline.addAfter("frame","idle",new IdleStateHandler(heartBtInt,0,0));
                                     spi.OnRspUserLogin(rsp, rspInfo, 0, true);
                                 }
                                 break;
@@ -103,6 +111,16 @@ public class NettySseTraderApi implements SseTraderApi {
                             default:
                                 System.out.println("Unknown message type: " + msgType);
                         }
+                    }
+
+                    @Override
+                    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+                       if( evt instanceof IdleStateEvent){
+                           if (((IdleStateEvent) evt).state() == IdleState.READER_IDLE){
+                               sendHeartbeat();
+                           }
+                       }
+                        super.userEventTriggered(ctx, evt);
                     }
                 });
             }
