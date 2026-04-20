@@ -26,9 +26,12 @@ public class NettySseTraderApi implements SseTraderApi {
     private SseTraderSpi spi;
     private volatile Channel channel;
 
+    private ApiStatus status;
+
     private static NioEventLoopGroup workerGroup = new NioEventLoopGroup(1);
 
     public NettySseTraderApi() {
+        status = ApiStatus.NEW;
     }
 
     @Override
@@ -38,6 +41,7 @@ public class NettySseTraderApi implements SseTraderApi {
 
     @Override
     public void Init() {
+        status = ApiStatus.CONNECTING;
 
         Bootstrap bootstrap = new Bootstrap();
         ChannelFuture future = bootstrap.group(workerGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
@@ -54,18 +58,51 @@ public class NettySseTraderApi implements SseTraderApi {
                     public void channelActive(ChannelHandlerContext ctx) throws Exception {
                         System.out.println("Connected to " + ctx.channel().remoteAddress());
                         channel = ctx.channel();
+                        status = ApiStatus.CONNECTED;
+                        if (spi != null) {
+                            spi.OnFrontConnected();
+                        }
                         super.channelActive(ctx);
                     }
 
                     @Override
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                         System.out.println("Disconnected from " + ctx.channel().remoteAddress());
+                        status = ApiStatus.DISCONNECTED;
+                        if (spi != null) {
+                            spi.OnFrontDisconnected(0); // 假设原因0
+                        }
                         super.channelInactive(ctx);
                     }
 
                     @Override
                     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
-                        System.out.println("Received msg: " + byteBuf.readableBytes());
+                        SseBinary msg = new SseBinary();
+                        msg.decode(byteBuf);
+                        int msgType = msg.getMsgType();
+                        switch (msgType) {
+                            case 33: // Heartbeat
+                                // 处理心跳
+                                break;
+                            case 40: // Logon response
+                                status = ApiStatus.LOGGED_IN;
+                                if (spi != null) {
+                                    RspUserLoginField rsp = new RspUserLoginField();
+                                    // 填充rsp，如果需要
+                                    RspInfoField rspInfo = new RspInfoField();
+                                    spi.OnRspUserLogin(rsp, rspInfo, 0, true);
+                                }
+                                break;
+                            case 41: // Logout response
+                                status = ApiStatus.DISCONNECTED; // 或 LOGOUT
+                                if (spi != null) {
+                                    RspInfoField rspInfo = new RspInfoField();
+                                    spi.OnRspUserLogout(rspInfo, 0, true);
+                                }
+                                break;
+                            default:
+                                System.out.println("Unknown message type: " + msgType);
+                        }
                     }
                 });
             }
@@ -74,6 +111,7 @@ public class NettySseTraderApi implements SseTraderApi {
                 System.out.println("连接成功");
             } else {
                 System.out.println("连接失败");
+                status = ApiStatus.ERROR;
             }
         });
         try {
@@ -119,6 +157,10 @@ public class NettySseTraderApi implements SseTraderApi {
 
     @Override
     public void ReqUserLogin(ReqUserLoginField reqUserLoginField, int requestId) {
+        if (status != ApiStatus.CONNECTED) {
+            System.out.println("Cannot login: not connected");
+            return;
+        }
         Logon logon = new Logon();
         logon.setSenderCompId("send");
         logon.setTargetCompId("target");
@@ -127,6 +169,7 @@ public class NettySseTraderApi implements SseTraderApi {
         logon.setPrtclVersion("1.0");
         logon.setTradeDate(20260420);
         send(logon);
+        // Status will be updated when response is received
     }
 
     private void sendHeartbeat(){
@@ -148,10 +191,15 @@ public class NettySseTraderApi implements SseTraderApi {
 
     @Override
     public void ReqUserLogout(ReqUserLogoutField reqUserLoginField, int requestId) {
+        if (status != ApiStatus.LOGGED_IN) {
+            System.out.println("Cannot logout: not logged in");
+            return;
+        }
         Logout logout = new Logout();
         logout.setSessionStatus(1);
         logout.setText("logout");
         sendMessage(41, logout);
+        status = ApiStatus.LOGGING_OUT;
     }
 
     @Override
