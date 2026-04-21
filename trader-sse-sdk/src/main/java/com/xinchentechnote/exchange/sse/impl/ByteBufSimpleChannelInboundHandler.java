@@ -8,8 +8,12 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<ByteBuf> {
+    private static final Logger logger = LoggerFactory.getLogger(ByteBufSimpleChannelInboundHandler.class);
+
     private final NettySseTraderApi nettySseTraderApi;
 
     public ByteBufSimpleChannelInboundHandler(NettySseTraderApi nettySseTraderApi) {
@@ -18,9 +22,9 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("Connected to " + ctx.channel().remoteAddress());
+        logger.info("Connected to {}", ctx.channel().remoteAddress());
         nettySseTraderApi.setChannel(ctx.channel());
-        nettySseTraderApi.setStatus(ApiStatus.CONNECTED);
+        nettySseTraderApi.getStatus().set(ApiStatus.CONNECTED);
         if (nettySseTraderApi.getSpi() != null) {
             nettySseTraderApi.getSpi().onFrontConnected();
         }
@@ -29,10 +33,10 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("Disconnected from " + ctx.channel().remoteAddress());
-        nettySseTraderApi.setStatus(ApiStatus.DISCONNECTED);
+        logger.info("Disconnected from {}", ctx.channel().remoteAddress());
+        nettySseTraderApi.getStatus().set(ApiStatus.DISCONNECTED);
         if (nettySseTraderApi.getSpi() != null) {
-            nettySseTraderApi.getSpi().onFrontDisconnected(0); // 假设原因0
+            nettySseTraderApi.getSpi().onFrontDisconnected(0); // Assuming reason 0
         }
         super.channelInactive(ctx);
     }
@@ -41,25 +45,25 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
         SseBinary msg = new SseBinary();
         msg.decode(byteBuf);
-        System.out.println("Received msg: " + msg);
+        logger.debug("Received message: {}", msg);
         int msgType = msg.getMsgType();
         switch (msgType) {
             case 33: // Heartbeat
-                // 处理心跳
+                // Handle heartbeat
                 break;
             case 40: // Logon response
-                nettySseTraderApi.setStatus(ApiStatus.LOGGED_IN);
+                nettySseTraderApi.getStatus().set(ApiStatus.LOGGED_IN);
                 if (nettySseTraderApi.getSpi() != null) {
                     Logon logon = (Logon) msg.getBody();
                     short heartBtInt = logon.getHeartBtInt();
                     ChannelPipeline pipeline = channelHandlerContext.pipeline();
-                    pipeline.remove("idle");
-                    pipeline.addAfter("frame", "idle", new IdleStateHandler(heartBtInt, 0, 0));
+                    pipeline.remove(HandlerName.IDLE);
+                    pipeline.addAfter(HandlerName.FRAME, HandlerName.IDLE, new IdleStateHandler(heartBtInt, 0, 0));
                     nettySseTraderApi.getSpi().onLogon(logon);
                 }
                 break;
             case 41: // Logout response
-                nettySseTraderApi.setStatus(ApiStatus.DISCONNECTED); // 或 LOGOUT
+                nettySseTraderApi.getStatus().set(ApiStatus.DISCONNECTED);
                 if (nettySseTraderApi.getSpi() != null) {
                     nettySseTraderApi.getSpi().onLogout((Logout) msg.getBody());
                 }
@@ -80,7 +84,7 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
                 }
                 break;
             default:
-                System.out.println("Unknown message type: " + msgType);
+                logger.warn("Unknown message type: {}", msgType);
         }
     }
 

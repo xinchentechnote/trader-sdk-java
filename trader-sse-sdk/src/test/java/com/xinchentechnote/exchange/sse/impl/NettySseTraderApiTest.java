@@ -1,84 +1,128 @@
 package com.xinchentechnote.exchange.sse.impl;
 
 import com.finproto.sse.bin.messages.*;
-import com.xinchentechnote.exchange.sse.SseTraderApi;
 import com.xinchentechnote.exchange.sse.SseTraderSpi;
 import com.google.common.io.Resources;
 import com.google.common.base.Charsets;
+import io.netty.channel.Channel;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.URL;
 import java.util.List;
-import java.util.concurrent.locks.LockSupport;
 
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
+@RunWith(MockitoJUnitRunner.class)
 public class NettySseTraderApiTest {
 
-    @org.junit.Test
-    public void init() {
-        SseTraderApi sseTraderApi = SseTraderApi.CreateSseTraderApi();
-        sseTraderApi.registerFront("tcp://127.0.0.1:9010");
-        sseTraderApi.registerSpi(new SseTraderSpi() {
-            @Override
-            public void onFrontConnected() {
-                Logon logon = new Logon();
-                logon.setSenderCompId("send");
-                logon.setTargetCompId("target");
-                logon.setQsize(10);
-                logon.setHeartBtInt((short) 5);
-                logon.setPrtclVersion("1.0");
-                logon.setTradeDate(20260420);
-                sseTraderApi.reqLogon(logon);
-            }
+    private NettySseTraderApi api;
 
-            @Override
-            public void onFrontDisconnected(int nReason) {
-                System.out.println("Disconnected, reason: " + nReason);
-            }
+    @Mock
+    private SseTraderSpi mockSpi;
 
-            @Override
-            public void onHeartBeatWarning(int nTimeLapse) {
-                System.out.println("Heartbeat warning, time lapse: " + nTimeLapse);
-            }
+    @Mock
+    private Channel mockChannel;
 
-            @Override
-            public void onLogon(Logon logon) {
-                System.out.println(logon);
-                //Logout logout = new Logout();
-                //logout.setSessionStatus(1);
-                //logout.setText("logout");
-                //sseTraderApi.ReqUserLogout(new ReqUserLogoutField(),2);
-                try {
-                    URL url = getClass().getClassLoader().getResource("sse_58.csv");
-                    String csvContent = Resources.toString(url, Charsets.UTF_8);
-                    List<NewOrderSingle> newOrderSingles = CsvHelper.parse(csvContent, NewOrderSingle.class);
-                    newOrderSingles.forEach(sseTraderApi::reqNewOrderSingle);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onLogout(Logout logout) {
-                System.out.println(logout);
-            }
-
-            @Override
-            public void onConfirm(Confirm confirm) {
-                System.out.println(confirm);
-            }
-
-            @Override
-            public void onReport(Report report) {
-                System.out.println(report);
-            }
-
-            @Override
-            public void onCancelReject(CancelReject cancelReject) {
-                System.out.println(cancelReject);
-            }
-
-        });
-        sseTraderApi.init();
-        LockSupport.parkNanos(20_000_000_000L);
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        api = new NettySseTraderApi();
     }
+
+    @Test
+    public void testConstructor() {
+        NettySseTraderApi newApi = new NettySseTraderApi();
+        assertEquals(ApiStatus.NEW, newApi.getStatus().get());
+    }
+
+    @Test
+    public void testRegisterFront() {
+        String frontAddress = "tcp://127.0.0.1:9010";
+        api.registerFront(frontAddress);
+        FrontInfoField frontInfo = api.getFrontInfo();
+        assertNotNull(frontInfo);
+        assertEquals("127.0.0.1", frontInfo.getIp());
+        assertEquals(9010, frontInfo.getPort());
+    }
+
+    @Test
+    public void testRegisterSpi() {
+        api.registerSpi(mockSpi);
+        assertEquals(mockSpi, api.getSpi());
+    }
+
+    @Test
+    public void testReqLogonWhenNotConnected() {
+        Logon logon = new Logon();
+        api.reqLogon(logon);
+        // Since status is NEW, should not send
+        verifyNoInteractions(mockChannel);
+    }
+
+    @Test
+    public void testReqLogonWhenConnected() {
+        // Set status to CONNECTED and mock channel
+        api.getStatus().set(ApiStatus.CONNECTED);
+        api.setChannel(mockChannel);
+        when(mockChannel.isActive()).thenReturn(true);
+
+        Logon logon = new Logon();
+        api.reqLogon(logon);
+
+        // Verify that writeAndFlush was called
+        verify(mockChannel).writeAndFlush(any());
+    }
+
+    @Test
+    public void testCsvParsing() throws Exception {
+        URL url = getClass().getClassLoader().getResource("sse_58.csv");
+        String csvContent = Resources.toString(url, Charsets.UTF_8);
+        List<NewOrderSingle> orders = CsvHelper.parse(csvContent, NewOrderSingle.class);
+        assertEquals(2, orders.size());
+        // Assuming the objects are parsed correctly, further assertions can be added if getters are available
+    }
+
+    @Test
+    public void testReqNewOrderSingle() {
+        api.getStatus().set(ApiStatus.LOGGED_IN);
+        api.setChannel(mockChannel);
+        when(mockChannel.isActive()).thenReturn(true);
+
+        NewOrderSingle order = new NewOrderSingle();
+        int result = api.reqNewOrderSingle(order);
+        assertEquals(0, result);
+        verify(mockChannel).writeAndFlush(any());
+    }
+
+    @Test
+    public void testReqOrderCancel() {
+        api.getStatus().set(ApiStatus.LOGGED_IN);
+        api.setChannel(mockChannel);
+        when(mockChannel.isActive()).thenReturn(true);
+
+        OrderCancel cancel = new OrderCancel();
+        int result = api.reqOrderCancel(cancel);
+        assertEquals(0, result);
+        verify(mockChannel).writeAndFlush(any());
+    }
+
+    @Test
+    public void testReqLogout() {
+        api.getStatus().set(ApiStatus.LOGGED_IN);
+        api.setChannel(mockChannel);
+        when(mockChannel.isActive()).thenReturn(true);
+
+        Logout logout = new Logout();
+        api.reqLogout(logout);
+        assertEquals(ApiStatus.LOGGING_OUT, api.getStatus().get());
+        verify(mockChannel).writeAndFlush(any());
+    }
+
+    // Note: init() test is complex due to Netty, skipped for now
 }
