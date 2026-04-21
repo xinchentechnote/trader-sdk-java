@@ -4,7 +4,6 @@ import com.finproto.codec.BinaryCodec;
 import com.finproto.sse.bin.messages.*;
 import com.xinchentechnote.exchange.sse.SseTraderApi;
 import com.xinchentechnote.exchange.sse.SseTraderSpi;
-import com.xinchentechnote.exchange.sse.dto.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

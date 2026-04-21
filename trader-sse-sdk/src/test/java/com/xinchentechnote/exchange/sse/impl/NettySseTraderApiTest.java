@@ -3,7 +3,10 @@ package com.xinchentechnote.exchange.sse.impl;
 import com.finproto.sse.bin.messages.*;
 import com.xinchentechnote.exchange.sse.SseTraderApi;
 import com.xinchentechnote.exchange.sse.SseTraderSpi;
+import com.google.common.io.Resources;
+import com.google.common.base.Charsets;
 
+import java.net.URL;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 
@@ -44,10 +47,14 @@ public class NettySseTraderApiTest {
                 //logout.setSessionStatus(1);
                 //logout.setText("logout");
                 //sseTraderApi.ReqUserLogout(new ReqUserLogoutField(),2);
-                List<NewOrderSingle> newOrderSingles = CsvHelper.parse("StepId,BizID,BizPbu,ClOrdID,SecurityID,Account,OwnerType,Side,Price,OrderQty,OrdType,TimeInForce,TransactTime,CreditTag,ClearingFirm,BranchID,UserInfo\n" +
-                        "new_order_001,010,pbu001,c10001,600000,10001,1,1,10,100,1,0,20250106101530,1,1001,b001,u000123\n" +
-                        "new_order_002,010,pbu002,c10002,600000,10002,1,2,10,200,1,0,20250106101605,1,1002,b002,u000456\n", NewOrderSingle.class);
-                newOrderSingles.forEach(sseTraderApi::reqNewOrderSingle);
+                try {
+                    URL url = getClass().getClassLoader().getResource("sse_58.csv");
+                    String csvContent = Resources.toString(url, Charsets.UTF_8);
+                    List<NewOrderSingle> newOrderSingles = CsvHelper.parse(csvContent, NewOrderSingle.class);
+                    newOrderSingles.forEach(sseTraderApi::reqNewOrderSingle);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override

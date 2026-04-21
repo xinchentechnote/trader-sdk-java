@@ -1,4 +1,4 @@
-package com.xinchentechnote.exchange.sse.dto;
+package com.xinchentechnote.exchange.sse.impl;
 
 import io.netty.util.internal.StringUtil;
 import lombok.Data;

@@ -1,7 +1,7 @@
 package com.xinchentechnote.exchange.sse;
 
 import com.finproto.sse.bin.messages.*;
-import com.xinchentechnote.exchange.sse.dto.*;
+import com.xinchentechnote.exchange.sse.impl.FrontInfoField;
 import com.xinchentechnote.exchange.sse.impl.NettySseTraderApi;
 
 public interface SseTraderApi {
