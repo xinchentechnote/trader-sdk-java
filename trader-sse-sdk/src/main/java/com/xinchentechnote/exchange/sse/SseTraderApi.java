@@ -22,21 +22,21 @@ public interface SseTraderApi {
         return implClass.getConstructor().newInstance();
     }
 
-    String GetApiVersion();
-    void Init();
-    void Join();
+    String getApiVersion();
+    void init();
+    void join();
 
-    int GetTradingDay();
-    FrontInfoField GetFrontInfo();
+    int getTradingDay();
+    FrontInfoField getFrontInfo();
 
-    void RegisterFront(String frontAddress);
+    void registerFront(String frontAddress);
 
-    void RegisterSpi(SseTraderSpi spi);
+    void registerSpi(SseTraderSpi spi);
 
-    void ReqLogon(Logon logon);
-    void ReqLogout(Logout logout);
+    void reqLogon(Logon logon);
+    void reqLogout(Logout logout);
 
-    int ReqNewOrderSingle(NewOrderSingle newOrderSingle);
-    int ReqOrderCancel(OrderCancel orderCancel);
+    int reqNewOrderSingle(NewOrderSingle newOrderSingle);
+    int reqOrderCancel(OrderCancel orderCancel);
 
 }

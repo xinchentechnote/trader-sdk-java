@@ -31,12 +31,12 @@ public class NettySseTraderApi implements SseTraderApi {
     }
 
     @Override
-    public String GetApiVersion() {
+    public String getApiVersion() {
         return "";
     }
 
     @Override
-    public void Init() {
+    public void init() {
         status = ApiStatus.CONNECTING;
 
         Bootstrap bootstrap = new Bootstrap();
@@ -61,33 +61,33 @@ public class NettySseTraderApi implements SseTraderApi {
     }
 
     @Override
-    public void Join() {
+    public void join() {
 
     }
 
     @Override
-    public int GetTradingDay() {
+    public int getTradingDay() {
         return 0;
     }
 
     @Override
-    public FrontInfoField GetFrontInfo() {
+    public FrontInfoField getFrontInfo() {
         return null;
     }
 
     @Override
-    public void RegisterFront(String frontAddress) {
+    public void registerFront(String frontAddress) {
         //tcp://182.254.243.31:40001
         this.frontInfo = new FrontInfoField(frontAddress);
     }
 
     @Override
-    public void RegisterSpi(SseTraderSpi spi) {
+    public void registerSpi(SseTraderSpi spi) {
         this.spi = spi;
     }
 
     @Override
-    public void ReqLogon(Logon logon) {
+    public void reqLogon(Logon logon) {
         if (status != ApiStatus.CONNECTED) {
             System.out.println("Cannot login: not connected");
             return;
@@ -110,19 +110,19 @@ public class NettySseTraderApi implements SseTraderApi {
     }
 
     @Override
-    public void ReqLogout(Logout logout) {
+    public void reqLogout(Logout logout) {
         sendMessage(41, logout);
         status = ApiStatus.LOGGING_OUT;
     }
 
     @Override
-    public int ReqNewOrderSingle(NewOrderSingle newOrderSingle) {
+    public int reqNewOrderSingle(NewOrderSingle newOrderSingle) {
         sendMessage(58, newOrderSingle);
         return 0;
     }
 
     @Override
-    public int ReqOrderCancel(OrderCancel orderCancel) {
+    public int reqOrderCancel(OrderCancel orderCancel) {
         sendMessage(61, orderCancel);
         return 0;
     }

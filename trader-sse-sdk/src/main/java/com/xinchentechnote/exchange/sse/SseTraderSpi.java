@@ -4,14 +4,14 @@ import com.finproto.sse.bin.messages.*;
 
 public interface SseTraderSpi {
 
-    void OnFrontConnected();
-    void OnFrontDisconnected(int nReason);
-    void OnHeartBeatWarning(int nTimeLapse);
+    void onFrontConnected();
+    void onFrontDisconnected(int nReason);
+    void onHeartBeatWarning(int nTimeLapse);
 
-    void OnLogon(Logon logon);
-    void OnLogout(Logout logout);
+    void onLogon(Logon logon);
+    void onLogout(Logout logout);
 
-    void OnConfirm(Confirm confirm);
-    void OnReport(Report report);
-    void OnCancelReject(CancelReject cancelReject);
+    void onConfirm(Confirm confirm);
+    void onReport(Report report);
+    void onCancelReject(CancelReject cancelReject);
 }
