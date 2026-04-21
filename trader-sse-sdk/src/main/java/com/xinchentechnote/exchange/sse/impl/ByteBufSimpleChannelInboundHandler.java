@@ -1,6 +1,7 @@
 package com.xinchentechnote.exchange.sse.impl;
 
 import com.finproto.sse.bin.messages.Logon;
+import com.finproto.sse.bin.messages.Logout;
 import com.finproto.sse.bin.messages.SseBinary;
 import com.xinchentechnote.exchange.sse.dto.RspInfoField;
 import com.xinchentechnote.exchange.sse.dto.RspUserLoginField;
@@ -56,18 +57,19 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
                     RspUserLoginField rsp = new RspUserLoginField();
                     // 填充rsp，如果需要
                     RspInfoField rspInfo = new RspInfoField();
-                    short heartBtInt = ((Logon) msg.getBody()).getHeartBtInt();
+                    Logon logon = (Logon) msg.getBody();
+                    short heartBtInt = logon.getHeartBtInt();
                     ChannelPipeline pipeline = channelHandlerContext.pipeline();
                     pipeline.remove("idle");
                     pipeline.addAfter("frame", "idle", new IdleStateHandler(heartBtInt, 0, 0));
-                    nettySseTraderApi.getSpi().OnRspUserLogin(rsp, rspInfo, 0, true);
+                    nettySseTraderApi.getSpi().OnLogon(logon);
                 }
                 break;
             case 41: // Logout response
                 nettySseTraderApi.setStatus(ApiStatus.DISCONNECTED); // 或 LOGOUT
                 if (nettySseTraderApi.getSpi() != null) {
                     RspInfoField rspInfo = new RspInfoField();
-                    nettySseTraderApi.getSpi().OnRspUserLogout(rspInfo, 0, true);
+                    nettySseTraderApi.getSpi().OnLogout((Logout) msg.getBody());
                 }
                 break;
             default:

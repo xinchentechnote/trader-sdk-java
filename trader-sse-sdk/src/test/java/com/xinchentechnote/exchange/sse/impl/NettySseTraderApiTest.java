@@ -1,5 +1,6 @@
 package com.xinchentechnote.exchange.sse.impl;
 
+import com.finproto.sse.bin.messages.*;
 import com.xinchentechnote.exchange.sse.SseTraderApi;
 import com.xinchentechnote.exchange.sse.SseTraderSpi;
 import com.xinchentechnote.exchange.sse.dto.*;
@@ -16,7 +17,14 @@ public class NettySseTraderApiTest {
         sseTraderApi.RegisterSpi(new SseTraderSpi() {
             @Override
             public void OnFrontConnected() {
-                sseTraderApi.ReqUserLogin(new ReqUserLoginField(),1);
+                Logon logon = new Logon();
+                logon.setSenderCompId("send");
+                logon.setTargetCompId("target");
+                logon.setQsize(10);
+                logon.setHeartBtInt((short) 5);
+                logon.setPrtclVersion("1.0");
+                logon.setTradeDate(20260420);
+                sseTraderApi.ReqLogon(logon);
             }
 
             @Override
@@ -30,34 +38,33 @@ public class NettySseTraderApiTest {
             }
 
             @Override
-            public void OnRspUserLogin(RspUserLoginField pRspUserLoginField, RspInfoField pRspInfo, int nRequestID, boolean bIsLast) {
-//                sseTraderApi.ReqUserLogout(new ReqUserLogoutField(),2);
+            public void OnLogon(Logon logon) {
+                //Logout logout = new Logout();
+                //logout.setSessionStatus(1);
+                //logout.setText("logout");
+                //sseTraderApi.ReqUserLogout(new ReqUserLogoutField(),2);
             }
 
             @Override
-            public void OnRspUserLogout(RspInfoField pRspInfo, int nRequestID, boolean bIsLast) {
-
-            }
-
-            @Override
-            public void OnRspOrderInsert(InputOrderField inputOrderField, RspInfoField pRspInfo, int nRequestID, boolean bIsLast) {
+            public void OnLogout(Logout logout) {
 
             }
 
             @Override
-            public void OnRspOrderAction(InputOrderActionField inputOrderActionField, RspInfoField pRspInfo, int nRequestID, boolean bIsLast) {
+            public void OnConfirm(Confirm confirm) {
 
             }
 
             @Override
-            public void OnRtnOrder(OrderField order) {
+            public void OnReport(Report report) {
 
             }
 
             @Override
-            public void OnRtnTrade(TradeField trade) {
+            public void OnCancelReject(CancelReject cancelReject) {
 
             }
+
         });
         sseTraderApi.Init();
         LockSupport.parkNanos(10_000_000_000L);

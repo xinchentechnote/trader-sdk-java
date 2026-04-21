@@ -1,10 +1,7 @@
 package com.xinchentechnote.exchange.sse.impl;
 
 import com.finproto.codec.BinaryCodec;
-import com.finproto.sse.bin.messages.Heartbeat;
-import com.finproto.sse.bin.messages.Logon;
-import com.finproto.sse.bin.messages.Logout;
-import com.finproto.sse.bin.messages.SseBinary;
+import com.finproto.sse.bin.messages.*;
 import com.xinchentechnote.exchange.sse.SseTraderApi;
 import com.xinchentechnote.exchange.sse.SseTraderSpi;
 import com.xinchentechnote.exchange.sse.dto.*;
@@ -85,38 +82,22 @@ public class NettySseTraderApi implements SseTraderApi {
     }
 
     @Override
-    public void RegisterNameServer(String nameServerAddress) {
-
-    }
-
-    @Override
     public void RegisterSpi(SseTraderSpi spi) {
         this.spi = spi;
     }
 
     @Override
-    public void ReqUserLogin(ReqUserLoginField reqUserLoginField, int requestId) {
+    public void ReqLogon(Logon logon) {
         if (status != ApiStatus.CONNECTED) {
             System.out.println("Cannot login: not connected");
             return;
         }
-        Logon logon = new Logon();
-        logon.setSenderCompId("send");
-        logon.setTargetCompId("target");
-        logon.setQsize(10);
-        logon.setHeartBtInt((short) 5);
-        logon.setPrtclVersion("1.0");
-        logon.setTradeDate(20260420);
-        send(logon);
-        // Status will be updated when response is received
+
+        sendMessage(40, logon);
     }
 
     public void sendHeartbeat() {
         sendMessage(33, heartbeat);
-    }
-
-    private void send(Logon logon) {
-        sendMessage(40, logon);
     }
 
     private void sendMessage(int msgType, BinaryCodec body) {
@@ -129,25 +110,20 @@ public class NettySseTraderApi implements SseTraderApi {
     }
 
     @Override
-    public void ReqUserLogout(ReqUserLogoutField reqUserLoginField, int requestId) {
-        if (status != ApiStatus.LOGGED_IN) {
-            System.out.println("Cannot logout: not logged in");
-            return;
-        }
-        Logout logout = new Logout();
-        logout.setSessionStatus(1);
-        logout.setText("logout");
+    public void ReqLogout(Logout logout) {
         sendMessage(41, logout);
         status = ApiStatus.LOGGING_OUT;
     }
 
     @Override
-    public int ReqOrderInsert(InputOrderField inputOrderField, int requestId) {
+    public int ReqNewOrderSingle(NewOrderSingle newOrderSingle) {
+        sendMessage(58, newOrderSingle);
         return 0;
     }
 
     @Override
-    public int ReqOrderAction(InputOrderActionField inputOrderActionField, int requestId) {
+    public int ReqOrderCancel(OrderCancel orderCancel) {
+        sendMessage(61, orderCancel);
         return 0;
     }
 

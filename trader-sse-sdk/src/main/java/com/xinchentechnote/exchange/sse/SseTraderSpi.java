@@ -1,6 +1,6 @@
 package com.xinchentechnote.exchange.sse;
 
-import com.xinchentechnote.exchange.sse.dto.*;
+import com.finproto.sse.bin.messages.*;
 
 public interface SseTraderSpi {
 
@@ -8,11 +8,10 @@ public interface SseTraderSpi {
     void OnFrontDisconnected(int nReason);
     void OnHeartBeatWarning(int nTimeLapse);
 
-    void OnRspUserLogin(RspUserLoginField pRspUserLoginField, RspInfoField pRspInfo, int nRequestID, boolean bIsLast);
-    void OnRspUserLogout(RspInfoField pRspInfo, int nRequestID, boolean bIsLast);
+    void OnLogon(Logon logon);
+    void OnLogout(Logout logout);
 
-    void OnRspOrderInsert(InputOrderField inputOrderField, RspInfoField pRspInfo, int nRequestID, boolean bIsLast);
-    void OnRspOrderAction(InputOrderActionField inputOrderActionField, RspInfoField pRspInfo, int nRequestID, boolean bIsLast);
-    void OnRtnOrder(OrderField order);
-    void OnRtnTrade(TradeField trade);
+    void OnConfirm(Confirm confirm);
+    void OnReport(Report report);
+    void OnCancelReject(CancelReject cancelReject);
 }

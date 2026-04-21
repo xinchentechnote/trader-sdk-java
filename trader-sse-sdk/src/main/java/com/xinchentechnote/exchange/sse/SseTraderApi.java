@@ -1,5 +1,6 @@
 package com.xinchentechnote.exchange.sse;
 
+import com.finproto.sse.bin.messages.*;
 import com.xinchentechnote.exchange.sse.dto.*;
 import com.xinchentechnote.exchange.sse.impl.NettySseTraderApi;
 
@@ -29,14 +30,13 @@ public interface SseTraderApi {
     FrontInfoField GetFrontInfo();
 
     void RegisterFront(String frontAddress);
-    void RegisterNameServer(String nameServerAddress);
 
     void RegisterSpi(SseTraderSpi spi);
 
-    void ReqUserLogin(ReqUserLoginField reqUserLoginField, int requestId);
-    void ReqUserLogout(ReqUserLogoutField reqUserLoginField, int requestId);
+    void ReqLogon(Logon logon);
+    void ReqLogout(Logout logout);
 
-    int ReqOrderInsert(InputOrderField inputOrderField, int requestId);
-    int ReqOrderAction(InputOrderActionField inputOrderActionField, int requestId);
+    int ReqNewOrderSingle(NewOrderSingle newOrderSingle);
+    int ReqOrderCancel(OrderCancel orderCancel);
 
 }
