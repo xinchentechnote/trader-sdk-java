@@ -49,11 +49,12 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
         msg.decode(byteBuf);
         logger.debug("Received message: {}", msg);
         int msgType = msg.getMsgType();
-        switch (msgType) {
-            case 33: // Heartbeat
+        SseBinary.BodyMessageFactory.MessageType messageType = SseBinary.BodyMessageFactory.MessageType.fromValue(msgType);
+        switch (messageType) {
+            case HEARTBEAT: // Heartbeat
                 heartbeatTimeoutCounter = 0; // Reset timeout counter on any message received
                 break;
-            case 40: // Logon response
+            case LOGON: // Logon response
                 nettySseTraderApi.getStatus().set(ApiStatus.LOGGED_IN);
                 if (nettySseTraderApi.getSpi() != null) {
                     Logon logon = (Logon) msg.getBody();
@@ -64,23 +65,23 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
                     nettySseTraderApi.getSpi().onLogon(logon);
                 }
                 break;
-            case 41: // Logout response
+            case LOGOUT: // Logout response
                 nettySseTraderApi.getStatus().set(ApiStatus.DISCONNECTED);
                 if (nettySseTraderApi.getSpi() != null) {
                     nettySseTraderApi.getSpi().onLogout((Logout) msg.getBody());
                 }
                 break;
-            case 32:
+            case CONFIRM:
                 if (nettySseTraderApi.getSpi() != null) {
                     nettySseTraderApi.getSpi().onConfirm((Confirm) msg.getBody());
                 }
                 break;
-            case 59:
+            case CANCEL_REJECT:
                 if (nettySseTraderApi.getSpi() != null) {
                     nettySseTraderApi.getSpi().onCancelReject((CancelReject) msg.getBody());
                 }
                 break;
-            case 103:
+            case REPORT:
                 if (nettySseTraderApi.getSpi() != null) {
                     nettySseTraderApi.getSpi().onReport((Report) msg.getBody());
                 }
