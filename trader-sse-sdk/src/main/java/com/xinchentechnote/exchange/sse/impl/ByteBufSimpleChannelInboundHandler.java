@@ -58,11 +58,14 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
                 nettySseTraderApi.getStatus().set(ApiStatus.LOGGED_IN);
                 if (nettySseTraderApi.getSpi() != null) {
                     Logon logon = (Logon) msg.getBody();
-                    short heartBtInt = logon.getHeartBtInt();
-                    ChannelPipeline pipeline = channelHandlerContext.pipeline();
-                    pipeline.remove(HandlerName.IDLE);
-                    pipeline.addAfter(HandlerName.FRAME, HandlerName.IDLE, new IdleStateHandler(heartBtInt, 0, 0));
-                    nettySseTraderApi.getSpi().onLogon(logon);
+                    int heartBtInt = HeartBtIntUtil.calculate(logon.getHeartBtInt());
+                    if (!HeartBtIntUtil.isMin(heartBtInt)) {
+                        ChannelPipeline pipeline = channelHandlerContext.pipeline();
+                        pipeline.remove(HandlerName.IDLE);
+                        pipeline.addAfter(HandlerName.FRAME, HandlerName.IDLE, new IdleStateHandler(heartBtInt, 0, 0));
+
+                    }
+                 nettySseTraderApi.getSpi().onLogon(logon);
                 }
                 break;
             case LOGOUT: // Logout response
@@ -95,8 +98,8 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
             if (((IdleStateEvent) evt).state() == IdleState.READER_IDLE) {
-                if (nettySseTraderApi.getSpi() != null) {
-                    nettySseTraderApi.getSpi().onHeartBeatWarning(0);
+                if (nettySseTraderApi.getSpi() != null && heartbeatTimeoutCounter > 0) {
+                    nettySseTraderApi.getSpi().onHeartBeatWarning(heartbeatTimeoutCounter);
                 }
                 heartbeatTimeoutCounter ++;
                 nettySseTraderApi.sendHeartbeat();
