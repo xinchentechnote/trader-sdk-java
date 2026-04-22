@@ -12,6 +12,13 @@ public interface SseTraderSpi {
     void onLogout(Logout logout);
 
     void onConfirm(Confirm confirm);
+    void onOrderReject(OrderReject orderReject);
     void onReport(Report report);
     void onCancelReject(CancelReject cancelReject);
+
+    void onExecRptInfo(ExecRptInfo execRptInfo);
+    void onPlatformState(PlatformState platformState);
+
+    void onExecRptSyncRsp(ExecRptSyncRsp execRptSyncRsp);
+    void onExecRptEndOfStream(ExecRptEndOfStream execRptEndOfStream);
 }

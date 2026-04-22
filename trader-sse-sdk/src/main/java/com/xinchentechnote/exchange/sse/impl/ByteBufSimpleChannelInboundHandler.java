@@ -16,6 +16,8 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
 
     private final NettySseTraderApi nettySseTraderApi;
 
+    private int heartbeatTimeoutCounter = 0;
+
     public ByteBufSimpleChannelInboundHandler(NettySseTraderApi nettySseTraderApi) {
         this.nettySseTraderApi = nettySseTraderApi;
     }
@@ -49,7 +51,7 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
         int msgType = msg.getMsgType();
         switch (msgType) {
             case 33: // Heartbeat
-                // Handle heartbeat
+                heartbeatTimeoutCounter = 0; // Reset timeout counter on any message received
                 break;
             case 40: // Logon response
                 nettySseTraderApi.getStatus().set(ApiStatus.LOGGED_IN);
@@ -95,7 +97,12 @@ class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<Byt
                 if (nettySseTraderApi.getSpi() != null) {
                     nettySseTraderApi.getSpi().onHeartBeatWarning(0);
                 }
+                heartbeatTimeoutCounter ++;
                 nettySseTraderApi.sendHeartbeat();
+                if (heartbeatTimeoutCounter >= 3) {
+                    logger.warn("Heartbeat timeout, closing connection");
+                    ctx.close();
+                }
             }
         }
         super.userEventTriggered(ctx, evt);

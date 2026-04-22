@@ -22,13 +22,6 @@ public class NettySseTraderApi implements SseTraderApi {
 
     private static final Logger logger = LoggerFactory.getLogger(NettySseTraderApi.class);
 
-    // Message type constants
-    private static final int MSG_TYPE_HEARTBEAT = 33;
-    private static final int MSG_TYPE_LOGON = 40;
-    private static final int MSG_TYPE_LOGOUT = 41;
-    private static final int MSG_TYPE_NEW_ORDER_SINGLE = 58;
-    private static final int MSG_TYPE_ORDER_CANCEL = 61;
-
     static final Heartbeat heartbeat = new Heartbeat();
 
     private FrontInfoField frontInfo;
@@ -127,11 +120,11 @@ public class NettySseTraderApi implements SseTraderApi {
             return;
         }
 
-        sendMessage(MSG_TYPE_LOGON, logon);
+        sendMessage(SseBinary.BodyMessageFactory.MessageType.LOGON.getValue(), logon);
     }
 
     public void sendHeartbeat() {
-        sendMessage(MSG_TYPE_HEARTBEAT, heartbeat);
+        sendMessage(SseBinary.BodyMessageFactory.MessageType.HEARTBEAT.getValue(), heartbeat);
     }
 
     private void sendMessage(int msgType, BinaryCodec body) {
@@ -161,7 +154,7 @@ public class NettySseTraderApi implements SseTraderApi {
         }
 
         status.set(ApiStatus.LOGGING_OUT);
-        sendMessage(MSG_TYPE_LOGOUT, logout);
+        sendMessage(SseBinary.BodyMessageFactory.MessageType.LOGOUT.getValue(), logout);
     }
 
     @Override
@@ -171,7 +164,7 @@ public class NettySseTraderApi implements SseTraderApi {
             return -1;
         }
 
-        sendMessage(MSG_TYPE_NEW_ORDER_SINGLE, newOrderSingle);
+        sendMessage(SseBinary.BodyMessageFactory.MessageType.NEW_ORDER_SINGLE.getValue(), newOrderSingle);
         return 0;
     }
 
@@ -182,7 +175,13 @@ public class NettySseTraderApi implements SseTraderApi {
             return -1;
         }
 
-        sendMessage(MSG_TYPE_ORDER_CANCEL, orderCancel);
+        sendMessage(SseBinary.BodyMessageFactory.MessageType.ORDER_CANCEL.getValue(), orderCancel);
+        return 0;
+    }
+
+    @Override
+    public int reqExecRptSync(ExecRptSync execRptSync) {
+        sendMessage(SseBinary.BodyMessageFactory.MessageType.EXEC_RPT_SYNC.getValue(), execRptSync);
         return 0;
     }
 

@@ -39,4 +39,5 @@ public interface SseTraderApi {
     int reqNewOrderSingle(NewOrderSingle newOrderSingle);
     int reqOrderCancel(OrderCancel orderCancel);
 
+    int reqExecRptSync(ExecRptSync execRptSync);
 }
