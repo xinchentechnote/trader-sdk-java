@@ -88,6 +88,11 @@ public class NettySseTraderApi implements SseTraderApi {
     }
 
     @Override
+    public ApiStatus getApiStatus() {
+        return status.get();
+    }
+
+    @Override
     public int getTradingDay() {
         // Return current date in YYYYMMDD format, e.g., 20260421
         return 20260421; // Placeholder, implement actual logic
@@ -119,7 +124,6 @@ public class NettySseTraderApi implements SseTraderApi {
             logger.warn("Cannot login: not connected, current status: {}", status.get());
             return;
         }
-
         sendMessage(SseBinary.BodyMessageFactory.MessageType.LOGON.getValue(), logon);
     }
 
@@ -152,7 +156,6 @@ public class NettySseTraderApi implements SseTraderApi {
             logger.warn("Cannot logout: not logged in, current status: {}", status.get());
             return;
         }
-
         status.set(ApiStatus.LOGGING_OUT);
         sendMessage(SseBinary.BodyMessageFactory.MessageType.LOGOUT.getValue(), logout);
     }
@@ -181,6 +184,10 @@ public class NettySseTraderApi implements SseTraderApi {
 
     @Override
     public int reqExecRptSync(ExecRptSync execRptSync) {
+        if (status.get() != ApiStatus.LOGGED_IN) {
+            logger.warn("Cannot cancel order: not logged in, current status: {}", status.get());
+            return -1;
+        }
         sendMessage(SseBinary.BodyMessageFactory.MessageType.EXEC_RPT_SYNC.getValue(), execRptSync);
         return 0;
     }
