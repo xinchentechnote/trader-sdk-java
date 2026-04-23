@@ -22,6 +22,6 @@ class SocketChannelChannelInitializer extends ChannelInitializer<SocketChannel> 
                         4,           // 长度调整 + 4byte checksum
                         0           // 初始字节剥离
                 )).addLast(HandlerName.IDLE, new IdleStateHandler(HeartBtIntUtil.MIN, 0, 0))
-                .addLast(new ByteBufSimpleChannelInboundHandler(nettySseTraderApi));
+                .addLast(HandlerName.MESSAGE, new SseApiMessageHandler(nettySseTraderApi));
     }
 }

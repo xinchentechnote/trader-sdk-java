@@ -11,14 +11,14 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ByteBufSimpleChannelInboundHandler extends SimpleChannelInboundHandler<ByteBuf> {
-    private static final Logger logger = LoggerFactory.getLogger(ByteBufSimpleChannelInboundHandler.class);
+class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
+    private static final Logger logger = LoggerFactory.getLogger(SseApiMessageHandler.class);
 
     private final NettySseTraderApi nettySseTraderApi;
 
     private int heartbeatTimeoutCounter = 0;
 
-    public ByteBufSimpleChannelInboundHandler(NettySseTraderApi nettySseTraderApi) {
+    public SseApiMessageHandler(NettySseTraderApi nettySseTraderApi) {
         this.nettySseTraderApi = nettySseTraderApi;
     }
 
