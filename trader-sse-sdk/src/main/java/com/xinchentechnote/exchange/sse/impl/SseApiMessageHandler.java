@@ -105,7 +105,7 @@ class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 nettySseTraderApi.sendHeartbeat();
                 if (heartbeatTimeoutCounter >= 3) {
                     logger.warn("Heartbeat timeout, closing connection");
-//                    ctx.close();
+                    ctx.close();
                 }
             }
         }
