@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>trader-sse-sdk</module>
+        <module>trader-szse-sdk</module>
     </modules>
 
     <properties>
