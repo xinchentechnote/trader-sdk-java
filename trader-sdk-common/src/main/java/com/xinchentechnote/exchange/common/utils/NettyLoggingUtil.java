@@ -1,4 +1,4 @@
-package com.xinchentechnote.exchange.common;
+package com.xinchentechnote.exchange.common.utils;
 
 import io.netty.handler.logging.LogLevel;
 

@@ -3,6 +3,7 @@ package com.xinchentechnote.exchange.sse.impl;
 import com.finproto.sse.bin.messages.*;
 import com.xinchentechnote.exchange.common.ApiStatus;
 import com.xinchentechnote.exchange.common.HandlerName;
+import com.xinchentechnote.exchange.sse.SseTraderSpi;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -17,11 +18,13 @@ class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(SseApiMessageHandler.class);
 
     private final NettySseTraderApi nettySseTraderApi;
+    private SseTraderSpi spi;
 
     private int heartbeatTimeoutCounter = 0;
 
     public SseApiMessageHandler(NettySseTraderApi nettySseTraderApi) {
         this.nettySseTraderApi = nettySseTraderApi;
+        this.spi = nettySseTraderApi.getSpi();
     }
 
     @Override
@@ -58,7 +61,7 @@ class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 break;
             case LOGON: // Logon response
                 nettySseTraderApi.getStatus().set(ApiStatus.LOGGED_IN);
-                if (nettySseTraderApi.getSpi() != null) {
+                if (spi != null) {
                     Logon logon = (Logon) msg.getBody();
                     int heartBtInt = HeartBtIntUtil.calculate(logon.getHeartBtInt());
                     if (!HeartBtIntUtil.isMin(heartBtInt)) {
@@ -67,28 +70,28 @@ class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
                         pipeline.addAfter(HandlerName.FRAME, HandlerName.IDLE, new IdleStateHandler(heartBtInt, 0, 0));
 
                     }
-                 nettySseTraderApi.getSpi().onLogon(logon);
+                    spi.onLogon(logon);
                 }
                 break;
             case LOGOUT: // Logout response
                 nettySseTraderApi.getStatus().set(ApiStatus.DISCONNECTED);
-                if (nettySseTraderApi.getSpi() != null) {
-                    nettySseTraderApi.getSpi().onLogout((Logout) msg.getBody());
+                if (spi != null) {
+                    spi.onLogout((Logout) msg.getBody());
                 }
                 break;
             case CONFIRM:
-                if (nettySseTraderApi.getSpi() != null) {
-                    nettySseTraderApi.getSpi().onConfirm((Confirm) msg.getBody());
+                if (spi != null) {
+                    spi.onConfirm((Confirm) msg.getBody());
                 }
                 break;
             case CANCEL_REJECT:
-                if (nettySseTraderApi.getSpi() != null) {
-                    nettySseTraderApi.getSpi().onCancelReject((CancelReject) msg.getBody());
+                if (spi != null) {
+                    spi.onCancelReject((CancelReject) msg.getBody());
                 }
                 break;
             case REPORT:
-                if (nettySseTraderApi.getSpi() != null) {
-                    nettySseTraderApi.getSpi().onReport((Report) msg.getBody());
+                if (spi != null) {
+                    spi.onReport((Report) msg.getBody());
                 }
                 break;
             default:
@@ -103,7 +106,7 @@ class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 if (nettySseTraderApi.getSpi() != null && heartbeatTimeoutCounter > 0) {
                     nettySseTraderApi.getSpi().onHeartBeatWarning(heartbeatTimeoutCounter);
                 }
-                heartbeatTimeoutCounter ++;
+                heartbeatTimeoutCounter++;
                 nettySseTraderApi.sendHeartbeat();
                 if (heartbeatTimeoutCounter >= 3) {
                     logger.warn("Heartbeat timeout, closing connection");

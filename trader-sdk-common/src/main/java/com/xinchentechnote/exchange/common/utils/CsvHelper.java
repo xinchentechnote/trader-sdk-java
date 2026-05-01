@@ -1,4 +1,4 @@
-package com.xinchentechnote.exchange.sse.impl;
+package com.xinchentechnote.exchange.common.utils;
 
 import java.io.BufferedReader;
 import java.io.StringReader;

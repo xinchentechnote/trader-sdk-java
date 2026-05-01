@@ -3,6 +3,8 @@ package com.xinchentechnote.exchange.sse.impl;
 import com.finproto.sse.bin.messages.*;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.xinchentechnote.exchange.common.ApiLogLevel;
+import com.xinchentechnote.exchange.common.utils.CsvHelper;
 import com.xinchentechnote.exchange.sse.SseTraderApi;
 import com.xinchentechnote.exchange.sse.SseTraderSpi;
 import org.slf4j.Logger;
@@ -46,7 +48,7 @@ class TestSseTraderSpi implements SseTraderSpi {
 
     @Override
     public void onLogon(Logon logon) {
-        logger.info("{}",logon);
+        logger.info("{}", logon);
         try {
             URL url = getClass().getClassLoader().getResource("sse_58.csv");
             String csvContent = Resources.toString(url, Charsets.UTF_8);
@@ -59,37 +61,37 @@ class TestSseTraderSpi implements SseTraderSpi {
 
     @Override
     public void onLogout(Logout logout) {
-        logger.info("{}",logout);
+        logger.info("{}", logout);
     }
 
     @Override
     public void onConfirm(Confirm confirm) {
-        logger.info("{}",confirm);
+        logger.info("{}", confirm);
     }
 
     @Override
     public void onOrderReject(OrderReject orderReject) {
-        logger.info("{}",orderReject);
+        logger.info("{}", orderReject);
     }
 
     @Override
     public void onReport(Report report) {
-        logger.info("{}",report);
+        logger.info("{}", report);
     }
 
     @Override
     public void onCancelReject(CancelReject cancelReject) {
-        logger.info("{}",cancelReject);
+        logger.info("{}", cancelReject);
     }
 
     @Override
     public void onExecRptInfo(ExecRptInfo execRptInfo) {
-        logger.info("{}",execRptInfo);
+        logger.info("{}", execRptInfo);
     }
 
     @Override
     public void onPlatformState(PlatformState platformState) {
-        logger.info("{}",platformState);
+        logger.info("{}", platformState);
     }
 
     @Override
@@ -99,6 +101,11 @@ class TestSseTraderSpi implements SseTraderSpi {
 
     @Override
     public void onExecRptEndOfStream(ExecRptEndOfStream execRptEndOfStream) {
+
+    }
+
+    @Override
+    public void onLog(ApiLogLevel level, String message) {
 
     }
 

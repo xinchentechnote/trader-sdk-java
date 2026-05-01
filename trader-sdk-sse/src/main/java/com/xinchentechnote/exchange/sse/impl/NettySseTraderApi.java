@@ -61,17 +61,17 @@ public class NettySseTraderApi implements SseTraderApi {
                 .handler(new SocketChannelChannelInitializer(this))
                 .connect(this.frontInfo.getIp(), this.frontInfo.getPort())
                 .addListener((ChannelFutureListener) channelFuture -> {
-            if (channelFuture.isSuccess()) {
-                logger.info("Connection successful to {}:{}", frontInfo.getIp(), frontInfo.getPort());
-                spi.onFrontConnected();
-            } else {
-                logger.error("Connection failed to {}:{}", frontInfo.getIp(), frontInfo.getPort(), channelFuture.cause());
-                status.set(ApiStatus.ERROR);
-                if (spi != null) {
-                    spi.onFrontDisconnected(-1); // Error code for connection failure
-                }
-            }
-        });
+                    if (channelFuture.isSuccess()) {
+                        logger.info("Connection successful to {}:{}", frontInfo.getIp(), frontInfo.getPort());
+                        spi.onFrontConnected();
+                    } else {
+                        logger.error("Connection failed to {}:{}", frontInfo.getIp(), frontInfo.getPort(), channelFuture.cause());
+                        status.set(ApiStatus.ERROR);
+                        if (spi != null) {
+                            spi.onFrontDisconnected(-1); // Error code for connection failure
+                        }
+                    }
+                });
         try {
             future.await();
         } catch (InterruptedException e) {

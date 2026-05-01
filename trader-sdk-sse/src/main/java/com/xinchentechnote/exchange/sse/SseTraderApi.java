@@ -7,7 +7,7 @@ import com.xinchentechnote.exchange.sse.impl.NettySseTraderApi;
 
 public interface SseTraderApi {
 
-    static SseTraderApi CreateSseTraderApi(){
+    static SseTraderApi CreateSseTraderApi() {
         return new NettySseTraderApi();
     }
 
@@ -26,10 +26,13 @@ public interface SseTraderApi {
     ApiStatus getApiStatus();
 
     String getApiVersion();
+
     void init();
+
     void join();
 
     int getTradingDay();
+
     FrontInfoField getFrontInfo();
 
     void registerFront(String frontAddress);
@@ -37,9 +40,11 @@ public interface SseTraderApi {
     void registerSpi(SseTraderSpi spi);
 
     void reqLogon(Logon logon);
+
     void reqLogout(Logout logout);
 
     int reqNewOrderSingle(NewOrderSingle newOrderSingle);
+
     int reqOrderCancel(OrderCancel orderCancel);
 
     int reqExecRptSync(ExecRptSync execRptSync);

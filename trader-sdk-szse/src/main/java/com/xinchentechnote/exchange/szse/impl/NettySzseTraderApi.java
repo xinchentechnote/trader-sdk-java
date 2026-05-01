@@ -4,20 +4,13 @@ import com.finproto.szse.bin.messages.Logon;
 import com.finproto.szse.bin.messages.Logout;
 import com.xinchentechnote.exchange.common.ApiStatus;
 import com.xinchentechnote.exchange.common.FrontInfoField;
-import com.xinchentechnote.exchange.common.HandlerName;
-import com.xinchentechnote.exchange.common.NettyLoggingUtil;
 import com.xinchentechnote.exchange.szse.SzseTraderApi;
 import com.xinchentechnote.exchange.szse.SzseTraderSpi;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +20,8 @@ public class NettySzseTraderApi implements SzseTraderApi {
 
     private FrontInfoField frontInfoField;
     private ApiStatus status = ApiStatus.NEW;
-    private SzseTraderSpi szseTraderSpi;
+    private SzseTraderSpi spi;
+    private Channel channel;
 
     @Override
     public ApiStatus getApiStatus() {
@@ -39,39 +33,45 @@ public class NettySzseTraderApi implements SzseTraderApi {
         return "1.0.0";
     }
 
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
+    }
+
+    public ApiStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ApiStatus status) {
+        this.status = status;
+    }
+
+    public SzseTraderSpi getSpi() {
+        return spi;
+    }
+
+    public void setSpi(SzseTraderSpi spi) {
+        this.spi = spi;
+    }
+
     @Override
     public void init() {
         EventLoopGroup group = new NioEventLoopGroup(1);
         Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(group)
-                .channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel socketChannel) throws Exception {
-                        ChannelPipeline pipeline = socketChannel.pipeline();
-                        if (NettyLoggingUtil.isLoggingEnabled()) {
-                            pipeline.addLast(NettyLoggingUtil.getLoggingHandlerName(), new LoggingHandler(NettyLoggingUtil.getLoggingLevel()));
-                        }
-                        pipeline.addLast(HandlerName.FRAME, new LengthFieldBasedFrameDecoder(1024 * 1024, // 最大帧长度
-                                        12,           // 长度字段偏移量（MsgType占4字节）
-                                        4,           // 长度字段长度（MsgSeqNum占8字节）
-                                        4,           // 长度调整 + 4byte checksum
-                                        0           // 初始字节剥离
-                                )).addLast(HandlerName.IDLE, new IdleStateHandler(HeartBtIntUtil.MIN, 0, 0))
-                                .addLast(HandlerName.MESSAGE, new SzseApiMessageHandler());
-                    }
-                })
-                .connect(this.frontInfoField.getIp(), this.frontInfoField.getPort()).addListener(future -> {
-                    if (future.isSuccess()) {
-                        status = ApiStatus.CONNECTED;
-                        szseTraderSpi.onFrontConnected();
-                        logger.info("Successfully connected to front: {}", frontInfoField);
-                    } else {
-                        status = ApiStatus.DISCONNECTED;
-                        szseTraderSpi.onFrontDisconnected(0);
-                        logger.error("Failed to connect to front: {}, reason: {}", frontInfoField, future.cause().getMessage());
-                    }
-                });
+        bootstrap.group(group).channel(NioSocketChannel.class).handler(new SocketChannelChannelInitializer(this)).connect(this.frontInfoField.getIp(), this.frontInfoField.getPort()).addListener(future -> {
+            if (future.isSuccess()) {
+                status = ApiStatus.CONNECTED;
+                spi.onFrontConnected();
+                logger.info("Successfully connected to front: {}", frontInfoField);
+            } else {
+                status = ApiStatus.DISCONNECTED;
+                spi.onFrontDisconnected(0);
+                logger.error("Failed to connect to front: {}, reason: {}", frontInfoField, future.cause().getMessage());
+            }
+        });
     }
 
     @Override
@@ -96,7 +96,7 @@ public class NettySzseTraderApi implements SzseTraderApi {
 
     @Override
     public void registerSpi(SzseTraderSpi spi) {
-        this.szseTraderSpi = spi;
+        this.spi = spi;
     }
 
     @Override
@@ -108,4 +108,5 @@ public class NettySzseTraderApi implements SzseTraderApi {
     public void reqLogout(Logout logout) {
 
     }
+
 }

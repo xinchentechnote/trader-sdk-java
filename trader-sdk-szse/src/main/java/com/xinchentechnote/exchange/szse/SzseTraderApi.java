@@ -15,10 +15,13 @@ public interface SzseTraderApi {
     ApiStatus getApiStatus();
 
     String getApiVersion();
+
     void init();
+
     void join();
 
     int getTradingDay();
+
     FrontInfoField getFrontInfo();
 
     void registerFront(String frontAddress);
@@ -26,6 +29,7 @@ public interface SzseTraderApi {
     void registerSpi(SzseTraderSpi spi);
 
     void reqLogon(Logon logon);
+
     void reqLogout(Logout logout);
 
 }
