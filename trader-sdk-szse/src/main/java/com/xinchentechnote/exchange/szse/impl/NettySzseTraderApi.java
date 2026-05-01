@@ -1,9 +1,7 @@
 package com.xinchentechnote.exchange.szse.impl;
 
-import com.finproto.szse.bin.messages.Heartbeat;
-import com.finproto.szse.bin.messages.Logon;
-import com.finproto.szse.bin.messages.Logout;
-import com.finproto.szse.bin.messages.SzseBinary;
+import com.finproto.codec.BinaryCodec;
+import com.finproto.szse.bin.messages.*;
 import com.xinchentechnote.exchange.common.ApiStatus;
 import com.xinchentechnote.exchange.common.FrontInfoField;
 import com.xinchentechnote.exchange.szse.SzseTraderApi;
@@ -25,7 +23,7 @@ public class NettySzseTraderApi implements SzseTraderApi {
     private FrontInfoField frontInfoField;
     private ApiStatus status = ApiStatus.NEW;
     private SzseTraderSpi spi;
-    private Channel channel;
+    private volatile Channel channel;
 
     @Override
     public ApiStatus getApiStatus() {
@@ -67,12 +65,9 @@ public class NettySzseTraderApi implements SzseTraderApi {
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(group).channel(NioSocketChannel.class).handler(new SocketChannelChannelInitializer(this)).connect(this.frontInfoField.getIp(), this.frontInfoField.getPort()).addListener(future -> {
             if (future.isSuccess()) {
-                status = ApiStatus.CONNECTED;
-                spi.onFrontConnected();
                 logger.info("Successfully connected to front: {}", frontInfoField);
             } else {
                 status = ApiStatus.DISCONNECTED;
-                spi.onFrontDisconnected(0);
                 logger.error("Failed to connect to front: {}, reason: {}", frontInfoField, future.cause().getMessage());
             }
         });
@@ -103,14 +98,43 @@ public class NettySzseTraderApi implements SzseTraderApi {
         this.spi = spi;
     }
 
+    private void sendMessage(int msgType, BinaryCodec body) {
+        if (channel == null || !channel.isActive()) {
+            throw new IllegalStateException("Channel not connected");
+        }
+
+        SzseBinary sseBinary = new SzseBinary();
+        sseBinary.setMsgType(msgType);
+        sseBinary.setBody(body);
+        ByteBuf buffer = Unpooled.buffer();
+        try {
+            sseBinary.encode(buffer);
+            channel.writeAndFlush(buffer);
+            logger.debug("Sent message type: {}", msgType);
+        } catch (Exception e) {
+            logger.error("Failed to send message type: {}", msgType, e);
+            throw new RuntimeException("Message send failed", e);
+        }
+    }
+
     @Override
     public void reqLogon(Logon logon) {
-
+        sendMessage(1, logon);
     }
 
     @Override
     public void reqLogout(Logout logout) {
+        sendMessage(2, logout);
+    }
 
+    @Override
+    public void reqNewOrder(NewOrder newOrder) {
+        sendMessage(100101, newOrder);
+    }
+
+    @Override
+    public void reqOrderCancelRequest(OrderCancelRequest orderCancelRequest) {
+        sendMessage(190007, orderCancelRequest);
     }
 
     private final SzseBinary heartbeat;

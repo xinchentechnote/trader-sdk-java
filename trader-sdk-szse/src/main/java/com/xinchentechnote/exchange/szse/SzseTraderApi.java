@@ -2,6 +2,8 @@ package com.xinchentechnote.exchange.szse;
 
 import com.finproto.szse.bin.messages.Logon;
 import com.finproto.szse.bin.messages.Logout;
+import com.finproto.szse.bin.messages.NewOrder;
+import com.finproto.szse.bin.messages.OrderCancelRequest;
 import com.xinchentechnote.exchange.common.ApiStatus;
 import com.xinchentechnote.exchange.common.FrontInfoField;
 import com.xinchentechnote.exchange.szse.impl.NettySzseTraderApi;
@@ -32,4 +34,7 @@ public interface SzseTraderApi {
 
     void reqLogout(Logout logout);
 
+    void reqNewOrder(NewOrder newOrder);
+
+    void reqOrderCancelRequest(OrderCancelRequest orderCancelRequest);
 }

@@ -63,7 +63,6 @@ public class NettySseTraderApi implements SseTraderApi {
                 .addListener((ChannelFutureListener) channelFuture -> {
                     if (channelFuture.isSuccess()) {
                         logger.info("Connection successful to {}:{}", frontInfo.getIp(), frontInfo.getPort());
-                        spi.onFrontConnected();
                     } else {
                         logger.error("Connection failed to {}:{}", frontInfo.getIp(), frontInfo.getPort(), channelFuture.cause());
                         status.set(ApiStatus.ERROR);

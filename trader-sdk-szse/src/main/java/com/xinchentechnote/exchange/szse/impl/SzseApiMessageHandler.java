@@ -33,11 +33,15 @@ public class SzseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         this.szseTraderApi.setChannel(ctx.channel());
+        this.szseTraderApi.setStatus(ApiStatus.CONNECTED);
+        this.spi.onFrontConnected();
         super.channelActive(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        this.szseTraderApi.setStatus(ApiStatus.DISCONNECTED);
+        this.spi.onFrontDisconnected(-1);
         super.channelInactive(ctx);
     }
 

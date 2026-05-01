@@ -1,9 +1,19 @@
 package com.xinchentechnote.exchange.szse;
 
 import com.finproto.szse.bin.messages.*;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import com.xinchentechnote.exchange.common.ApiLogLevel;
+import com.xinchentechnote.exchange.common.utils.CsvHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.URL;
+import java.util.List;
 
 public class TestSzseTraderSpi implements SzseTraderSpi {
+
+    private static Logger logger = LoggerFactory.getLogger(TestSzseTraderSpi.class);
     private SzseTraderApi sseTraderApi;
 
     public TestSzseTraderSpi(SzseTraderApi sseTraderApi) {
@@ -28,7 +38,16 @@ public class TestSzseTraderSpi implements SzseTraderSpi {
 
     @Override
     public void onLogon(Logon logon) {
-
+        logger.info("{}", logon);
+        try {
+            URL url = getClass().getClassLoader().getResource("szse_100101.csv");
+            String csvContent = Resources.toString(url, Charsets.UTF_8);
+            List<NewOrder> newOrderSingles = CsvHelper.parse(csvContent, NewOrder.class);
+            newOrderSingles.forEach(order->order.setApplExtend(new Extend100101()));
+            newOrderSingles.forEach(sseTraderApi::reqNewOrder);
+        } catch (Exception e) {
+            logger.error("Failed to read CSV file", e);
+        }
     }
 
     @Override
