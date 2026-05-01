@@ -1,7 +1,7 @@
-package com.xinchentechnote.exchange.szse.impl;
+package com.xinchentechnote.exchange.common;
 
-import io.netty.util.internal.StringUtil;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
 
 @Data
 public class FrontInfoField {
@@ -10,7 +10,7 @@ public class FrontInfoField {
     private short port;
 
     public FrontInfoField(String frontAddress) {
-        if (StringUtil.isNullOrEmpty(frontAddress)) {
+        if (StringUtils.isEmpty(frontAddress)) {
             throw new IllegalArgumentException("frontAddress is null or empty");
         }
         try {

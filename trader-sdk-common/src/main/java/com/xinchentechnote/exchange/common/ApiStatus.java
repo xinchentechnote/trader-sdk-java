@@ -1,4 +1,4 @@
-package com.xinchentechnote.exchange.szse.impl;
+package com.xinchentechnote.exchange.common;
 
 public enum ApiStatus {
     NEW,

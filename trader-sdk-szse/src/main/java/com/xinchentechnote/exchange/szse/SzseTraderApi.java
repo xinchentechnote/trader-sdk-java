@@ -2,8 +2,8 @@ package com.xinchentechnote.exchange.szse;
 
 import com.finproto.szse.bin.messages.Logon;
 import com.finproto.szse.bin.messages.Logout;
-import com.xinchentechnote.exchange.szse.impl.ApiStatus;
-import com.xinchentechnote.exchange.szse.impl.FrontInfoField;
+import com.xinchentechnote.exchange.common.ApiStatus;
+import com.xinchentechnote.exchange.common.FrontInfoField;
 import com.xinchentechnote.exchange.szse.impl.NettySzseTraderApi;
 
 public interface SzseTraderApi {

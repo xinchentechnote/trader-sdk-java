@@ -1,4 +1,4 @@
-package com.xinchentechnote.exchange.sse.impl;
+package com.xinchentechnote.exchange.common;
 
 public class HandlerName {
     public static final String IDLE = "idleHandler";

@@ -1,5 +1,7 @@
 package com.xinchentechnote.exchange.sse.impl;
 
+import com.xinchentechnote.exchange.common.HandlerName;
+import com.xinchentechnote.exchange.common.NettyLoggingUtil;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;

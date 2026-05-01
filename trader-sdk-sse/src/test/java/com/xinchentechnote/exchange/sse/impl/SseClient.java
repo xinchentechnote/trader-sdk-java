@@ -2,7 +2,7 @@ package com.xinchentechnote.exchange.sse.impl;
 
 import com.xinchentechnote.exchange.sse.SseTraderApi;
 
-public class Main {
+public class SseClient {
     public static void main(String[] args) {
         SseTraderApi sseTraderApi = SseTraderApi.CreateSseTraderApi();
         sseTraderApi.registerFront("tcp://127.0.0.1:9010");
