@@ -42,11 +42,6 @@ class TestSseTraderSpi implements SseTraderSpi {
     }
 
     @Override
-    public void onHeartBeatWarning(int nTimeLapse) {
-        logger.info("Heartbeat warning, time lapse: " + nTimeLapse);
-    }
-
-    @Override
     public void onLogon(Logon logon) {
         logger.info("{}", logon);
         try {

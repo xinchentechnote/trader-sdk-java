@@ -27,11 +27,6 @@ public class TestSzseTraderSpi implements SzseTraderSpi {
     }
 
     @Override
-    public void onHeartBeatWarning(int nTimeLapse) {
-
-    }
-
-    @Override
     public void onLogon(Logon logon) {
 
     }
@@ -63,6 +58,26 @@ public class TestSzseTraderSpi implements SzseTraderSpi {
 
     @Override
     public void onBusinessReject(BusinessReject businessReject) {
+
+    }
+
+    @Override
+    public void onPlatformStateInfo(PlatformStateInfo platformStateInfo) {
+
+    }
+
+    @Override
+    public void onPlatformInfo(PlatformInfo platformInfo) {
+
+    }
+
+    @Override
+    public void onTradingSessionStatus(TradingSessionStatus tradingSessionStatus) {
+
+    }
+
+    @Override
+    public void onReportFinished(ReportFinished reportFinished) {
 
     }
 }

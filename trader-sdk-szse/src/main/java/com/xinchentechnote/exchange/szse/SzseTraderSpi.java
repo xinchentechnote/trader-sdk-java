@@ -9,8 +9,6 @@ public interface SzseTraderSpi {
 
     void onFrontDisconnected(int nReason);
 
-    void onHeartBeatWarning(int nTimeLapse);
-
     void onLogon(Logon logon);
 
     void onLogout(Logout logout);
@@ -24,4 +22,13 @@ public interface SzseTraderSpi {
     void onCancelReject(CancelReject cancelReject);
 
     void onBusinessReject(BusinessReject businessReject);
+
+    void onPlatformStateInfo(PlatformStateInfo platformStateInfo);
+
+    void onPlatformInfo(PlatformInfo platformInfo);
+
+    void onTradingSessionStatus(TradingSessionStatus tradingSessionStatus);
+
+    void onReportFinished(ReportFinished reportFinished);
+
 }

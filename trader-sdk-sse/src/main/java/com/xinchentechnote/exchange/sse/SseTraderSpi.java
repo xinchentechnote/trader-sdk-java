@@ -9,8 +9,6 @@ public interface SseTraderSpi {
 
     void onFrontDisconnected(int nReason);
 
-    void onHeartBeatWarning(int nTimeLapse);
-
     void onLogon(Logon logon);
 
     void onLogout(Logout logout);

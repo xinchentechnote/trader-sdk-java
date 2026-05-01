@@ -72,6 +72,23 @@ public class SzseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> 
             if (null != spi) {
                 spi.onBusinessReject((BusinessReject) body);
             }
+        } else if (body instanceof PlatformStateInfo) {
+            if (null != spi) {
+                spi.onPlatformStateInfo((PlatformStateInfo) body);
+            }
+        } else if (body instanceof PlatformInfo) {
+            if (null != spi) {
+                spi.onPlatformInfo((PlatformInfo) body);
+            }
+        } else if (body instanceof TradingSessionStatus) {
+            if (null != spi) {
+                spi.onTradingSessionStatus((TradingSessionStatus) body);
+            }
+        } else if (body instanceof ReportFinished) {
+            if (null != spi) {
+                spi.onReportFinished((ReportFinished) body);
+            }
+
         }
     }
 

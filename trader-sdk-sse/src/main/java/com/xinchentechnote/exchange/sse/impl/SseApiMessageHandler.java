@@ -55,9 +55,9 @@ class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
         logger.debug("Received message: {}", msg);
         int msgType = msg.getMsgType();
         SseBinary.BodyMessageFactory.MessageType messageType = SseBinary.BodyMessageFactory.MessageType.fromValue(msgType);
+        heartbeatTimeoutCounter = 0; // Reset timeout counter on any message received
         switch (messageType) {
             case HEARTBEAT: // Heartbeat
-                heartbeatTimeoutCounter = 0; // Reset timeout counter on any message received
                 break;
             case LOGON: // Logon response
                 nettySseTraderApi.getStatus().set(ApiStatus.LOGGED_IN);
@@ -103,9 +103,6 @@ class SseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
             if (((IdleStateEvent) evt).state() == IdleState.READER_IDLE) {
-                if (nettySseTraderApi.getSpi() != null && heartbeatTimeoutCounter > 0) {
-                    nettySseTraderApi.getSpi().onHeartBeatWarning(heartbeatTimeoutCounter);
-                }
                 heartbeatTimeoutCounter++;
                 nettySseTraderApi.sendHeartbeat();
                 if (heartbeatTimeoutCounter >= 3) {
