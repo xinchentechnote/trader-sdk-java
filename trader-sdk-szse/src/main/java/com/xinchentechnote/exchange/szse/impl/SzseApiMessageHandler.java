@@ -61,6 +61,12 @@ public class SzseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> 
         } else if (body instanceof Logout) {
             // Do nothing, just reset the idle timer
             szseTraderApi.setStatus(ApiStatus.LOGGING_OUT);
+            ctx.executor().schedule(() -> {
+                ctx.close();
+            }, 1, java.util.concurrent.TimeUnit.SECONDS);
+             if (null != spi) {
+                 spi.onLogout((Logout) body);
+             }
         } else if (body instanceof ExecutionConfirm) {
             if (null != spi) {
                 spi.onExecutionConfirm((ExecutionConfirm) body);
