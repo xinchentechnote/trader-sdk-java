@@ -1,0 +1,112 @@
+
+@startuml
+skinparam sequenceArrowThickness 2
+skinparam NoteBackgroundColor #F0F8FF
+
+participant OMS
+participant TDGW
+
+participant OMS
+participant TDGW
+
+== 建立连接与登录处理 ==
+
+OMS ->> TDGW: 建立TCP连接
+OMS ->> TDGW: Logon
+note right of TDGW: 登录处理
+alt 登陆失败
+TDGW ->> OMS: Logout
+else 登陆成功
+TDGW ->> OMS: Logon
+TDGW ->> OMS: PlatformState
+TDGW ->> OMS: ExecRptInfo
+end
+== 心跳与注销 ==
+
+OMS ->> TDGW: HeartBeat
+note right of TDGW: 心跳
+OMS <<- TDGW: HeartBeat
+
+note right of TDGW: 注销
+OMS ->> TDGW: Logout
+
+
+== 限价订单申报：前置校验失败 ==
+
+OMS ->> TDGW: 限价申报（New Order Single）
+note right of TDGW: 前置校验失败
+TDGW -->> OMS: 订单拒绝（Order Reject, OrdRejReason=xxx）
+
+== 限价订单申报：业务校验失败 ==
+
+OMS ->> TDGW: 限价申报（New Order Single）
+note right of TDGW: 业务校验失败
+TDGW -->> OMS: 申报响应（Execution Report, ExecType=8）
+
+== 限价订单申报：业务校验通过 ==
+
+OMS ->> TDGW: 限价申报（New Order Single）
+note right of TDGW: 业务校验通过后，\n先返回申报响应，\n然后根据不同的业务\n规则和订单执行情况\n返回成交回报
+TDGW -->> OMS: 申报响应（Execution Report, ExecType=0）
+TDGW --->> OMS: 成交回报（Execution Report, ExecType=F）
+
+
+
+== 市价转撤订单申报：前置校验失败 ==
+
+OMS ->> TDGW: 市转撤申报（New Order Single）
+note right of TDGW: 前置校验失败
+TDGW -->> OMS: 订单拒绝（Order Reject, OrdRejReason=xxx）
+
+== 市价转撤订单申报：业务校验失败 ==
+
+OMS ->> TDGW: 市转撤申报（New Order Single）
+note right of TDGW: 业务校验失败
+TDGW -->> OMS: 申报响应（Execution Report, ExecType=8）
+
+== 市价转撤订单申报：业务校验通过 ==
+
+OMS ->> TDGW: 市转撤申报（New Order Single）
+note right of TDGW: 业务校验通过后，\n先返回申报响应（并\n携带剩余未成交数\n量），再返回成交回报
+TDGW -->> OMS: 申报响应（Execution Report, ExecType=0）
+TDGW --->> OMS: 成交回报（Execution Report, ExecType=F）
+
+
+== 市转限订单申报：前置校验失败 ==
+
+OMS ->> TDGW: 市转限申报（New Order Single）
+note right of TDGW: 前置校验失败
+TDGW -->> OMS: 订单拒绝（Order Reject, OrdRejReason=xxx）
+
+== 市转限订单申报：业务校验失败 ==
+
+OMS ->> TDGW: 市转限申报（New Order Single）
+note right of TDGW: 业务校验失败
+TDGW -->> OMS: 申报响应（Execution Report, ExecType=8）
+
+== 市转限订单申报：业务校验通过 ==
+
+OMS ->> TDGW: 市转限申报（New Order Single）
+note right of TDGW: 业务校验通过后，\n先返回申报响应\n（携带剩余转限价数量），\n如有成交，再返回成交回报
+TDGW -->> OMS: 申报响应（Execution Report, ExecType=0）
+TDGW --->> OMS: 成交回报（Execution Report, ExecType=F）
+
+== 新订单撤单：前置校验失败 ==
+
+OMS ->> TDGW: 撤单申报（Order Cancel）
+note right of TDGW: 前置校验失败
+TDGW -->> OMS: 订单拒绝\n(Order Reject, OrdRejReason=xxx)
+
+== 新订单撤单：撤单失败 ==
+
+OMS ->> TDGW: 撤单申报（Order Cancel）
+note right of TDGW: 撤单失败
+TDGW -->> OMS: 撤单失败响应\n(Execution Report, CxlRejReason=xxx)
+
+== 新订单撤单：撤单成功 ==
+
+OMS ->> TDGW: 撤单申报（Order Cancel）
+note right of TDGW: 撤单成功
+TDGW -->> OMS: 撤单成功响应\n(Execution Report, ExecType=4)
+
+@enduml
