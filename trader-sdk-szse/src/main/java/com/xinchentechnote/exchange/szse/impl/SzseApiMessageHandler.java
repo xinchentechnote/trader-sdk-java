@@ -6,15 +6,20 @@ import com.xinchentechnote.exchange.common.ApiStatus;
 import com.xinchentechnote.exchange.common.HandlerName;
 import com.xinchentechnote.exchange.szse.SzseTraderSpi;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
 
 public class SzseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> {
+
+    private static Logger logger = LoggerFactory.getLogger(SzseApiMessageHandler.class);
 
     private NettySzseTraderApi szseTraderApi;
     private SzseTraderSpi spi;
@@ -38,11 +43,11 @@ public class SzseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf byteBuf) throws Exception {
+        heartbeatTimeoutCounter = 0;
         SzseBinary msg = new SzseBinary();
         msg.decode(byteBuf);
         System.out.println("Received message: " + msg);
         BinaryCodec body = msg.getBody();
-        heartbeatTimeoutCounter = 0;
         if (body instanceof Logon) {
             Logon logon = (Logon) body;
             int heartBtint = logon.getHeartBtint();
@@ -96,13 +101,12 @@ public class SzseApiMessageHandler extends SimpleChannelInboundHandler<ByteBuf> 
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
             if (((IdleStateEvent) evt).state() == IdleState.READER_IDLE) {
-                SzseBinary szseBinary = new SzseBinary();
-                szseBinary.setMsgType(3);
-                szseBinary.setBody(new Heartbeat());
-                ByteBuf buffer = Unpooled.buffer();
-                szseBinary.encode(buffer);
-                ctx.writeAndFlush(buffer);
-                System.out.println(szseBinary);
+                heartbeatTimeoutCounter++;
+                szseTraderApi.sendHeartbeat();
+                if (heartbeatTimeoutCounter >= 3) {
+                    logger.warn("Heartbeat timeout, closing connection");
+                    ctx.close();
+                }
             }
         }
         super.userEventTriggered(ctx, evt);

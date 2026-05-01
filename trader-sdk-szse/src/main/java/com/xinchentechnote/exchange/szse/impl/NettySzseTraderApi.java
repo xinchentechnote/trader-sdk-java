@@ -1,12 +1,16 @@
 package com.xinchentechnote.exchange.szse.impl;
 
+import com.finproto.szse.bin.messages.Heartbeat;
 import com.finproto.szse.bin.messages.Logon;
 import com.finproto.szse.bin.messages.Logout;
+import com.finproto.szse.bin.messages.SzseBinary;
 import com.xinchentechnote.exchange.common.ApiStatus;
 import com.xinchentechnote.exchange.common.FrontInfoField;
 import com.xinchentechnote.exchange.szse.SzseTraderApi;
 import com.xinchentechnote.exchange.szse.SzseTraderSpi;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -109,4 +113,17 @@ public class NettySzseTraderApi implements SzseTraderApi {
 
     }
 
+    private final SzseBinary heartbeat;
+
+    public NettySzseTraderApi() {
+         heartbeat = new SzseBinary();
+         heartbeat.setMsgType(3);
+         heartbeat.setBody(new Heartbeat());
+    }
+
+    public void sendHeartbeat() {
+        ByteBuf buffer = Unpooled.buffer();
+        heartbeat.encode(buffer);
+        channel.writeAndFlush(buffer);
+    }
 }

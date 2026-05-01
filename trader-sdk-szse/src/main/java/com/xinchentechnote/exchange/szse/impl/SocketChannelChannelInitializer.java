@@ -24,10 +24,12 @@ class SocketChannelChannelInitializer extends ChannelInitializer<SocketChannel> 
             pipeline.addLast(NettyLoggingUtil.getLoggingHandlerName(), new LoggingHandler(NettyLoggingUtil.getLoggingLevel()));
         }
         pipeline.addLast(HandlerName.FRAME, new LengthFieldBasedFrameDecoder(1024 * 1024, // 最大帧长度
-                12,           // 长度字段偏移量（MsgType占4字节）
-                4,           // 长度字段长度（MsgSeqNum占8字节）
-                4,           // 长度调整 + 4byte checksum
-                0           // 初始字节剥离
-        )).addLast(HandlerName.IDLE, new IdleStateHandler(HeartBtIntUtil.MIN, 0, 0)).addLast(HandlerName.MESSAGE, new SzseApiMessageHandler(szseTraderApi));
+                        4,           // 长度字段偏移量（MsgType占4字节）
+                        4,           // 长度字段长度（bodylength 4字节）
+                        4,           // 长度调整 + 4byte checksum
+                        0           // 初始字节剥离
+                ))
+                .addLast(HandlerName.IDLE, new IdleStateHandler(HeartBtIntUtil.MIN, 0, 0))
+                .addLast(HandlerName.MESSAGE, new SzseApiMessageHandler(szseTraderApi));
     }
 }
