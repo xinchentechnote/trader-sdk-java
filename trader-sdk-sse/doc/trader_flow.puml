@@ -6,9 +6,6 @@ skinparam NoteBackgroundColor #F0F8FF
 participant OMS
 participant TDGW
 
-participant OMS
-participant TDGW
-
 == 建立连接与登录处理 ==
 
 OMS ->> TDGW: 建立TCP连接

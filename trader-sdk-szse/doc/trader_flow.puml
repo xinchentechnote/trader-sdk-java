@@ -3,5 +3,128 @@
 
 autonumber
 
-OMS->TGW
+== 建立连接与登录处理 ==
+OMS -> TGW: 建立TCP连接
+OMS->TGW:Logon
+note right of TGW:登陆处理
+alt Logon Success
+    TGW->OMS:Logon
+    TGW->OMS:PlatformStateInfo
+    TGW->OMS:PlatformInfo
+    TGW->OMS:TradingSessionStatus
+    OMS->TGW:ReportSynchronization
+else Logon Failure
+    TGW->OMS:Logout
+end
+note right of TGW:心跳
+alt Heartbeat
+OMS->TGW:Heartbeat
+TGW->OMS:Heartbeat
+end
+
+== 新订单处理流程 ==
+OMS ->> TGW: 新订单
+note over TGW, OMS
+ ClOrdID=100
+ end note
+
+TGW ->> OMS: 执行报告
+note over TGW, OMS
+ ClOrdID=100
+ ExecID=e1000
+ ExecType=Reject
+ OrdStatus=Reject
+ 订单因未通过交易系统前端检查而被拒绝
+end note
+
+== 订单被接受 ==
+
+TGW -->> OMS: 执行报告 : 订单被接受
+note over TGW, OMS
+ClOrdID=100
+ExecID=e1000
+ExecType=New
+OrdStatus=New
+OrderID=2000
+end note
+
+== 订单部分成交 ==
+
+TGW -->> OMS: 执行报告
+note over TGW,OMS
+ ClOrdID=100
+  ExecID=e1001
+  ExecType=Trade
+  OrdStatus=Partially Filled
+  OrderID=2000
+ 订单部分成交
+ end note
+
+== 订单全部成交 ==
+
+TGW -->> OMS: 执行报告
+note over TGW, OMS
+ ClOrdID=100
+ ExecID=e1002
+ ExecType=Trade
+ OrdStatus=Filled
+ OrderID=2000
+ 订单全部成交
+end note
+
+
+== 场景一：新订单被接受 ==
+
+OMS ->> TGW: 新订单
+note right of TGW: 申报一笔新订单
+note over TGW, OMS
+ClOrdID=100
+end note
+
+TGW -->> OMS: 执行报告
+note right of TGW: 场景一：新订单被接受
+note over TGW, OMS
+ClOrdID=100
+ExecID=e1000
+ExecType=New
+OrdStatus=New
+OrderID=2000
+end note
+
+== 场景二：撤单 ==
+
+OMS ->> TGW: 撤单请求
+note right of TGW: 场景二：撤单
+note over TGW, OMS
+ClOrdID=101
+OrigClOrdID=100
+end note
+
+== 场景 2A：撤单请求被拒绝 ==
+
+TGW -->> OMS: 撤单失败响应
+note right of TGW: 场景 2A：撤单请求被拒绝\nOrdStatus 为原始委托的当前状态
+note over TGW, OMS
+ClOrdID=101
+OrdStatus=New
+end note
+
+== 场景 2B：撤单成功响应 ==
+
+TGW -->> OMS: 执行报告
+note right of TGW: 场景 2B：撤单成功响应
+note over TGW, OMS
+ClOrdID=101
+OrigClOrdID=100
+ExecID=e1001
+ExecType=Cancelled
+OrdStatus=Cancelled
+OrderID=2000
+end note
+
+
+
+
+TGW->OMS:ReportFinished
+
 @enduml
