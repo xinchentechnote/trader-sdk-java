@@ -141,12 +141,13 @@ public class NettySseTraderApi implements SseTraderApi {
         SseBinary sseBinary = new SseBinary();
         sseBinary.setMsgType(msgType);
         sseBinary.setBody(body);
-        ByteBuf buffer = Unpooled.buffer();
+        ByteBuf buffer = channel.alloc().buffer(1024);
         try {
             sseBinary.encode(buffer);
             channel.writeAndFlush(buffer);
             logger.debug("Sent message type: {}", msgType);
         } catch (Exception e) {
+            buffer.release();
             logger.error("Failed to send message type: {}", msgType, e);
             throw new RuntimeException("Message send failed", e);
         }

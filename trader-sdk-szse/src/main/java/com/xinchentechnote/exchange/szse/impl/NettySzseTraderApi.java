@@ -106,12 +106,13 @@ public class NettySzseTraderApi implements SzseTraderApi {
         SzseBinary sseBinary = new SzseBinary();
         sseBinary.setMsgType(msgType);
         sseBinary.setBody(body);
-        ByteBuf buffer = Unpooled.buffer();
+        ByteBuf buffer = channel.alloc().buffer(1024);
         try {
             sseBinary.encode(buffer);
             channel.writeAndFlush(buffer);
             logger.debug("Sent message type: {}", msgType);
         } catch (Exception e) {
+            buffer.release();
             logger.error("Failed to send message type: {}", msgType, e);
             throw new RuntimeException("Message send failed", e);
         }
@@ -146,8 +147,14 @@ public class NettySzseTraderApi implements SzseTraderApi {
     }
 
     public void sendHeartbeat() {
-        ByteBuf buffer = Unpooled.buffer();
-        heartbeat.encode(buffer);
-        channel.writeAndFlush(buffer);
+        ByteBuf buffer = channel.alloc().buffer(32);
+        try {
+            heartbeat.encode(buffer);
+            channel.writeAndFlush(buffer);
+        } catch (Exception e){
+            buffer.release();
+            logger.error("Failed to send heartbeat", e);
+        }
+
     }
 }
