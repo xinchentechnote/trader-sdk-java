@@ -69,6 +69,8 @@ public class CsvHelper {
 
                 result.add(instance);
             }
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             System.err.println("Error parsing CSV: " + e.getMessage());
         }
